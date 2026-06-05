@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
+import Logo from '../components/Logo'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -34,18 +35,18 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-brand-500 to-brand-700 px-6 py-10">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-brand-500 to-brand-700 dark:from-zinc-900 dark:to-zinc-950 px-6 py-10 transition-all duration-300">
       <div className="mb-8 flex flex-col items-center text-white">
-        <img src="/favicon.svg" alt="logo" className="h-20 w-20 drop-shadow-lg" />
-        <h1 className="mt-4 text-3xl font-extrabold tracking-tight">Lekha-Jokha</h1>
+        <Logo size={90} className="drop-shadow-lg" />
+        <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-white dark:text-zinc-100">Lekha-Jokha</h1>
         <p className="mt-1 text-xs text-brand-100 text-center uppercase tracking-wider font-semibold">Account for every penny, settle with ease.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="card w-full max-w-sm space-y-4 p-6">
-        <h2 className="text-xl font-bold text-ink">Welcome back</h2>
+        <h2 className="text-xl font-bold text-ink dark:text-zinc-100">Welcome back</h2>
 
         {!isSupabaseConfigured && (
-          <p className="rounded-lg bg-orange-50 p-3 text-sm text-owe">
+          <p className="rounded-lg bg-orange-50 dark:bg-orange-950/20 p-3 text-sm text-owe">
             Supabase isn't configured. Create a <code>.env</code> file from{' '}
             <code>.env.example</code> and restart.
           </p>
@@ -80,7 +81,7 @@ export default function Login() {
         )}
 
         {error && <p className="text-sm font-medium text-owe">{error}</p>}
-        {info && <p className="text-sm font-medium text-brand-600">{info}</p>}
+        {info && <p className="text-sm font-medium text-brand-600 dark:text-brand-400">{info}</p>}
 
         <button className="btn-primary w-full" disabled={loading}>
           {loading ? 'Please wait…' : magic ? 'Send magic link' : 'Sign in'}
@@ -93,12 +94,12 @@ export default function Login() {
             setError(null)
             setInfo(null)
           }}
-          className="w-full text-center text-sm font-semibold text-brand-600"
+          className="w-full text-center text-sm font-semibold text-brand-600 dark:text-brand-400"
         >
           {magic ? 'Use email & password instead' : 'Email me a magic link instead'}
         </button>
 
-        <p className="border-t border-gray-100 pt-3 text-center text-xs text-muted">
+        <p className="border-t border-gray-100 dark:border-zinc-800 pt-3 text-center text-xs text-muted dark:text-zinc-400">
           Accounts are created by your administrator in Supabase Auth.
         </p>
       </form>

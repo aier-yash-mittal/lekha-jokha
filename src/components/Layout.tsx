@@ -14,10 +14,10 @@ export default function Layout({ children }: { children: ReactNode }) {
   const hideNav = /^\/(groups\/[^/]+|expense)/.test(pathname)
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-md flex-col bg-[#f4f6f8]">
+    <div className="mx-auto flex min-h-screen max-w-md flex-col bg-[#f4f6f8] dark:bg-zinc-950 text-ink dark:text-zinc-100 transition-colors duration-300">
       <main className={`flex-1 ${hideNav ? '' : 'pb-24'}`}>{children}</main>
       {!hideNav && (
-        <nav className="safe-bottom fixed inset-x-0 bottom-0 z-40 mx-auto max-w-md border-t border-gray-100 bg-white/95 backdrop-blur">
+        <nav className="safe-bottom fixed inset-x-0 bottom-0 z-40 mx-auto max-w-md border-t border-gray-100 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur">
           <div className="grid grid-cols-3">
             {tabs.map(({ to, label, Icon, exact }) => (
               <NavLink
@@ -26,7 +26,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                 end={exact}
                 className={({ isActive }) =>
                   `flex flex-col items-center gap-1 py-2.5 text-xs font-semibold transition ${
-                    isActive ? 'text-brand-500' : 'text-gray-400'
+                    isActive ? 'text-brand-500' : 'text-gray-400 dark:text-zinc-500 hover:text-gray-600 dark:hover:text-zinc-400'
                   }`
                 }
               >

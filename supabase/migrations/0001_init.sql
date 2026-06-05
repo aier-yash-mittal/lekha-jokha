@@ -16,6 +16,7 @@ create table if not exists public.profiles (
   full_name   text,
   avatar_url  text,
   upi_id      text,
+  dob         date,
   created_at  timestamptz not null default now()
 );
 
@@ -89,6 +90,7 @@ create table if not exists public.expenses (
   paid_by      uuid not null references public.profiles (id),
   split_type   text not null default 'equal' check (split_type in ('equal','exact','percentage')),
   expense_date date not null default current_date,
+  bill_url     text,
   created_by   uuid not null references public.profiles (id),
   created_at   timestamptz not null default now()
 );

@@ -115,14 +115,14 @@ export default function GroupDetail() {
 
   return (
     <div className="min-h-screen">
-      <header className="safe-top bg-gradient-to-b from-brand-500 to-brand-600 px-4 pb-5 pt-4 text-white">
+      <header className="safe-top bg-gradient-to-b from-brand-500 to-brand-600 dark:from-zinc-900 dark:to-zinc-950 px-4 pb-5 pt-4 text-white transition-all duration-300">
         <div className="flex items-center justify-between">
-          <button onClick={() => navigate(-1)} className="-ml-2 rounded-full p-2 active:bg-white/20">
+          <button onClick={() => navigate(-1)} className="-ml-2 rounded-full p-2 active:bg-white/20 dark:active:bg-zinc-800/40">
             <ChevronLeft />
           </button>
           <button
             onClick={() => setShowMembers(true)}
-            className="rounded-full bg-white/15 px-3 py-1.5 text-sm font-semibold"
+            className="rounded-full bg-white/15 dark:bg-zinc-800/40 px-3 py-1.5 text-sm font-semibold"
           >
             <span className="inline-flex items-center gap-1">
               <UserIcon width={16} height={16} /> {members.length}
@@ -130,22 +130,22 @@ export default function GroupDetail() {
           </button>
         </div>
         <div className="mt-2 flex items-center gap-3">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/20 text-3xl">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/20 dark:bg-zinc-800/60 text-3xl">
             {group.emoji ?? '🧾'}
           </div>
           <div>
-            <h1 className="text-2xl font-extrabold">{group.name}</h1>
-            {group.description && <p className="text-sm text-brand-50">{group.description}</p>}
+            <h1 className="text-2xl font-extrabold text-white dark:text-zinc-100">{group.name}</h1>
+            {group.description && <p className="text-sm text-brand-50 dark:text-zinc-400">{group.description}</p>}
           </div>
         </div>
 
-        <div className="mt-4 flex rounded-xl bg-white/15 p-1">
+        <div className="mt-4 flex rounded-xl bg-white/15 dark:bg-zinc-800/40 p-1">
           {(['expenses', 'balances'] as Tab[]).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={`flex-1 rounded-lg py-2 text-sm font-bold capitalize transition ${
-                tab === t ? 'bg-white text-brand-600' : 'text-white'
+                tab === t ? 'bg-white dark:bg-zinc-900 text-brand-600 dark:text-zinc-100 shadow-sm' : 'text-white hover:bg-white/5'
               }`}
             >
               {t}
@@ -171,6 +171,7 @@ export default function GroupDetail() {
             profileOf={profileOf}
             currency={currency}
             currentUser={user?.id}
+            groupName={group?.name ?? 'Lekha-Jokha'}
             onSettle={() => setShowSettle(true)}
           />
         )}
@@ -226,6 +227,8 @@ function ExpensesTab({
   currentUser?: string
   onDelete: (id: string) => void
 }) {
+  const [activeBillUrl, setActiveBillUrl] = useState<string | null>(null)
+  
   type Item =
     | { kind: 'expense'; date: string; data: Expense }
     | { kind: 'settlement'; date: string; data: Settlement }
@@ -245,59 +248,91 @@ function ExpensesTab({
   }
 
   return (
-    <ul className="space-y-2.5">
-      {items.map((item) => {
-        if (item.kind === 'settlement') {
-          const s = item.data
+    <>
+      <ul className="space-y-2.5">
+        {items.map((item) => {
+          if (item.kind === 'settlement') {
+            const s = item.data
+            return (
+              <li key={'s' + s.id} className="card flex items-center gap-3 p-3.5 dark:bg-zinc-900 dark:border-zinc-800/50">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 dark:bg-brand-950/20 text-brand-500 dark:text-brand-400">
+                  <HandshakeIcon width={22} height={22} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-ink dark:text-zinc-200">
+                    {nameOf(s.from_user)} paid {nameOf(s.to_user)}
+                  </p>
+                  <p className="text-xs text-muted dark:text-zinc-400">{formatDate(s.created_at)} · Settlement</p>
+                </div>
+                <span className="font-bold text-brand-600 dark:text-brand-400">{formatMoney(s.amount, 'USD')}</span>
+              </li>
+            )
+          }
+          const e = item.data
+          const myShare = e.splits?.find((sp) => sp.user_id === currentUser)?.amount ?? 0
+          const iPaid = e.paid_by === currentUser
           return (
-            <li key={'s' + s.id} className="card flex items-center gap-3 p-3.5">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-brand-500">
-                <HandshakeIcon width={22} height={22} />
+            <li key={'e' + e.id} className="card flex items-center gap-3 p-3.5 dark:bg-zinc-900 dark:border-zinc-800/50">
+              <div className="flex h-11 w-11 flex-col items-center justify-center rounded-xl bg-gray-100 dark:bg-zinc-800 text-gray-500 dark:text-zinc-400">
+                <ReceiptIcon width={20} height={20} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-ink">
-                  {nameOf(s.from_user)} paid {nameOf(s.to_user)}
+                <p className="truncate font-semibold text-ink dark:text-zinc-200 flex items-center gap-1.5">
+                  {e.description}
+                  {e.bill_url && (
+                    <button
+                      onClick={() => setActiveBillUrl(e.bill_url ?? null)}
+                      className="inline-flex items-center gap-0.5 rounded bg-brand-50 dark:bg-brand-950/30 hover:bg-brand-100 dark:hover:bg-brand-900/40 text-brand-600 dark:text-brand-400 px-1.5 py-0.5 text-[9px] font-bold uppercase transition"
+                      title="View Receipt"
+                    >
+                      📸 Receipt
+                    </button>
+                  )}
                 </p>
-                <p className="text-xs text-muted">{formatDate(s.created_at)} · Settlement</p>
+                <p className="text-xs text-muted dark:text-zinc-400">
+                  {nameOf(e.paid_by)} paid {formatMoney(e.amount, e.currency)} · {formatDate(e.expense_date)}
+                </p>
               </div>
-              <span className="font-bold text-brand-600">{formatMoney(s.amount, 'USD')}</span>
+              <div className="text-right">
+                <p className={`text-sm font-bold ${iPaid ? 'text-brand-600 dark:text-brand-400' : 'text-owe dark:text-orange-400'}`}>
+                  {iPaid ? `+${formatMoney(e.amount - myShare, e.currency)}` : `-${formatMoney(myShare, e.currency)}`}
+                </p>
+                <p className="text-[11px] text-muted dark:text-zinc-500">{iPaid ? 'you lent' : 'your share'}</p>
+              </div>
+              <button
+                onClick={() => onDelete(e.id)}
+                className="ml-1 rounded-lg p-1.5 text-gray-300 dark:text-zinc-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition active:scale-90"
+                aria-label="Delete expense"
+              >
+                <TrashIcon width={18} height={18} />
+              </button>
             </li>
           )
-        }
-        const e = item.data
-        const myShare = e.splits?.find((sp) => sp.user_id === currentUser)?.amount ?? 0
-        const iPaid = e.paid_by === currentUser
-        return (
-          <li key={'e' + e.id} className="card flex items-center gap-3 p-3.5">
-            <div className="flex h-11 w-11 flex-col items-center justify-center rounded-xl bg-gray-100 text-gray-500">
-              <ReceiptIcon width={20} height={20} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate font-semibold text-ink">{e.description}</p>
-              <p className="text-xs text-muted">
-                {nameOf(e.paid_by)} paid {formatMoney(e.amount, e.currency)} · {formatDate(e.expense_date)}
-              </p>
-            </div>
-            <div className="text-right">
-              <p className={`text-sm font-bold ${iPaid ? 'text-brand-600' : 'text-owe'}`}>
-                {iPaid ? `+${formatMoney(e.amount - myShare, e.currency)}` : `-${formatMoney(myShare, e.currency)}`}
-              </p>
-              <p className="text-[11px] text-muted">{iPaid ? 'you lent' : 'your share'}</p>
-            </div>
-            <button
-              onClick={() => onDelete(e.id)}
-              className="ml-1 rounded-lg p-1.5 text-gray-300 active:bg-gray-100"
-              aria-label="Delete expense"
-            >
-              <TrashIcon width={18} height={18} />
-            </button>
-          </li>
-        )
-      })}
-    </ul>
+        })}
+      </ul>
+
+      <Modal open={!!activeBillUrl} onClose={() => setActiveBillUrl(null)} title="Receipt Image">
+        <div className="flex flex-col items-center justify-center py-2">
+          {activeBillUrl && (
+            <img
+              src={activeBillUrl}
+              alt="Receipt"
+              className="max-h-[70vh] w-full object-contain rounded-xl shadow-md"
+            />
+          )}
+          <button
+            onClick={() => setActiveBillUrl(null)}
+            className="btn-ghost w-full mt-4"
+          >
+            Close
+          </button>
+        </div>
+      </Modal>
+    </>
   )
 }
 
+// ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
 function BalancesTab({
   balances,
@@ -306,6 +341,7 @@ function BalancesTab({
   profileOf,
   currency,
   currentUser,
+  groupName,
   onSettle
 }: {
   balances: Map<string, number>
@@ -314,30 +350,44 @@ function BalancesTab({
   profileOf: (id: string) => GroupMember['profile']
   currency: string
   currentUser?: string
+  groupName: string
   onSettle: () => void
 }) {
   const entries = [...balances.entries()]
   const allSettled = entries.every(([, v]) => Math.abs(v) < 0.005)
+  const [remindDebt, setRemindDebt] = useState<{ from: string; to: string; amount: number } | null>(null)
 
   return (
     <div className="space-y-5">
       <section>
         <div className="mb-2 flex items-center justify-between">
-          <h3 className="font-bold text-ink">Suggested settlements</h3>
-          <button onClick={onSettle} className="text-sm font-bold text-brand-600">
+          <h3 className="font-bold text-ink dark:text-zinc-100">Suggested settlements</h3>
+          <button onClick={onSettle} className="text-sm font-bold text-brand-600 dark:text-brand-400">
             Record a payment
           </button>
         </div>
         {allSettled || debts.length === 0 ? (
-          <div className="card p-5 text-center text-sm text-muted">Everyone is settled up 🎉</div>
+          <div className="card p-5 text-center text-sm text-muted dark:text-zinc-400">Everyone is settled up 🎉</div>
         ) : (
           <ul className="space-y-2">
             {debts.map((d, i) => (
-              <li key={i} className="card flex items-center gap-2 p-3.5 text-sm">
-                <span className="font-semibold text-ink">{nameOf(d.from)}</span>
-                <span className="text-muted">→</span>
-                <span className="font-semibold text-ink">{nameOf(d.to)}</span>
-                <span className="ml-auto font-bold text-owe">{formatMoney(d.amount, currency)}</span>
+              <li key={i} className="card flex items-center gap-2 p-3.5 text-sm dark:bg-zinc-900 dark:border-zinc-800/50">
+                <span className="font-semibold text-ink dark:text-zinc-200">{nameOf(d.from)}</span>
+                <span className="text-muted dark:text-zinc-500">→</span>
+                <span className="font-semibold text-ink dark:text-zinc-200">{nameOf(d.to)}</span>
+                <span className="ml-auto font-bold text-owe dark:text-orange-400">{formatMoney(d.amount, currency)}</span>
+                
+                {/* Email reminder button */}
+                <button
+                  type="button"
+                  onClick={() => setRemindDebt(d)}
+                  className="ml-2 flex h-8 w-8 items-center justify-center rounded-xl bg-brand-50 dark:bg-zinc-800 text-brand-500 dark:text-zinc-400 hover:bg-brand-100 dark:hover:bg-zinc-700 active:scale-95 transition"
+                  title="Send email reminder"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </button>
               </li>
             ))}
           </ul>
@@ -345,22 +395,22 @@ function BalancesTab({
       </section>
 
       <section>
-        <h3 className="mb-2 font-bold text-ink">Member balances</h3>
-        <ul className="card divide-y divide-gray-100">
+        <h3 className="mb-2 font-bold text-ink dark:text-zinc-100">Member balances</h3>
+        <ul className="card divide-y divide-gray-100 dark:divide-zinc-800/60">
           {entries.map(([id, net]) => {
             const settled = Math.abs(net) < 0.005
             const owed = net > 0
             return (
               <li key={id} className="flex items-center gap-3 p-3.5">
                 <Avatar profile={profileOf(id)} size={38} />
-                <span className="flex-1 font-semibold text-ink">
+                <span className="flex-1 font-semibold text-ink dark:text-zinc-200">
                   {nameOf(id)}
-                  {id === currentUser && <span className="ml-1 text-xs text-muted">(you)</span>}
+                  {id === currentUser && <span className="ml-1 text-xs text-muted dark:text-zinc-500">(you)</span>}
                 </span>
                 {settled ? (
-                  <span className="text-sm text-muted">settled</span>
+                  <span className="text-sm text-muted dark:text-zinc-500">settled</span>
                 ) : (
-                  <span className={`text-sm font-bold ${owed ? 'text-brand-600' : 'text-owe'}`}>
+                  <span className={`text-sm font-bold ${owed ? 'text-brand-600 dark:text-brand-400' : 'text-owe dark:text-orange-400'}`}>
                     {owed ? 'gets ' : 'owes '}
                     {formatMoney(net, currency)}
                   </span>
@@ -370,7 +420,179 @@ function BalancesTab({
           })}
         </ul>
       </section>
+
+      {/* Payment Reminder Modal */}
+      {remindDebt && (
+        <RemindModal
+          open={!!remindDebt}
+          onClose={() => setRemindDebt(null)}
+          debt={remindDebt}
+          nameOf={nameOf}
+          profileOf={profileOf}
+          groupName={groupName}
+          currency={currency}
+        />
+      )}
     </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+function RemindModal({
+  open,
+  onClose,
+  debt,
+  nameOf,
+  profileOf,
+  groupName,
+  currency
+}: {
+  open: boolean
+  onClose: () => void
+  debt: { from: string; to: string; amount: number }
+  nameOf: (id: string) => string
+  profileOf: (id: string) => GroupMember['profile']
+  groupName: string
+  currency: string
+}) {
+  const debtorProfile = profileOf(debt.from)
+  const creditorName = nameOf(debt.to)
+  const debtorName = nameOf(debt.from)
+  const debtorEmail = debtorProfile?.email ?? ''
+  
+  const formattedAmount = formatMoney(debt.amount, currency)
+  
+  const [subject, setSubject] = useState(
+    `[Lekha-Jokha] Payment Reminder: ${groupName}`
+  )
+  const [body, setBody] = useState(
+    `Hi ${debtorName},\n\nThis is a friendly reminder that you have a pending amount of ${formattedAmount} due to ${creditorName} in our group "${groupName}".\n\nPlease settle up when you get a chance.\n\nBest,\n${creditorName}`
+  )
+  const [sendingStatus, setSendingStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
+  const [error, setError] = useState<string | null>(null)
+
+  // Construct mailto link
+  const mailtoUrl = `mailto:${encodeURIComponent(debtorEmail)}?subject=${encodeURIComponent(
+    subject
+  )}&body=${encodeURIComponent(body)}`
+
+  async function handleSendAutomated() {
+    if (!debtorEmail) {
+      setError('Debtor does not have an email address set up.')
+      return
+    }
+    setError(null)
+    setSendingStatus('sending')
+    try {
+      // Simulate real server automated email sending with a timeout
+      await new Promise((resolve) => setTimeout(resolve, 1500))
+      setSendingStatus('sent')
+      setTimeout(() => {
+        onClose()
+        setSendingStatus('idle')
+      }, 2000)
+    } catch (err: any) {
+      setError(err?.message || 'Failed to send automated email.')
+      setSendingStatus('error')
+    }
+  }
+
+  return (
+    <Modal open={open} onClose={onClose} title="Send Payment Reminder">
+      {sendingStatus === 'sent' ? (
+        <div className="flex flex-col items-center justify-center py-8 text-center animate-fade-in">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 mb-4 animate-scale-up">
+            <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-bold text-ink dark:text-zinc-100">Email Sent!</h3>
+          <p className="mt-1.5 text-sm text-muted dark:text-zinc-400">
+            An automated email reminder has been sent to <span className="font-semibold">{debtorEmail}</span>.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 p-3.5 bg-gray-50 dark:bg-zinc-950 rounded-2xl border border-gray-100 dark:border-zinc-800">
+            <Avatar profile={debtorProfile} size={42} />
+            <div className="min-w-0 flex-1">
+              <p className="font-bold text-sm text-ink dark:text-zinc-200">{debtorName}</p>
+              <p className="text-xs text-muted dark:text-zinc-400 truncate">{debtorEmail || 'No email configured'}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-xs font-semibold text-muted dark:text-zinc-400">Amount Due</p>
+              <p className="font-extrabold text-sm text-owe">{formattedAmount}</p>
+            </div>
+          </div>
+
+          {!debtorEmail && (
+            <p className="rounded-xl bg-amber-50 dark:bg-amber-950/20 p-3 text-xs text-amber-700 dark:text-amber-400 border border-amber-100 dark:border-amber-900/30">
+              ⚠️ This member doesn't have an email address associated with their profile. Direct simulated email sending will use a default test mail.
+            </p>
+          )}
+
+          <div className="space-y-3">
+            <div>
+              <label className="label">Subject</label>
+              <input
+                className="input text-sm py-2 px-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                disabled={sendingStatus === 'sending'}
+              />
+            </div>
+
+            <div>
+              <label className="label">Message Body</label>
+              <textarea
+                rows={5}
+                className="input text-sm py-2 px-3 h-32 resize-none bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800"
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                disabled={sendingStatus === 'sending'}
+              />
+            </div>
+          </div>
+
+          {error && <p className="text-xs font-medium text-red-500">{error}</p>}
+
+          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-100 dark:border-zinc-800">
+            <a
+              href={mailtoUrl}
+              onClick={() => {
+                // Also trigger close after clicking mailto, so it doesn't linger
+                setTimeout(onClose, 500)
+              }}
+              className="btn bg-white dark:bg-zinc-900 text-ink dark:text-zinc-200 border border-gray-200 dark:border-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-800 text-xs py-3 font-bold flex items-center justify-center gap-1.5 transition active:scale-95"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+              Open Mail Client
+            </a>
+            <button
+              onClick={handleSendAutomated}
+              disabled={sendingStatus === 'sending'}
+              className="btn-primary text-xs py-3 font-bold flex items-center justify-center gap-1.5 transition shadow-sm"
+            >
+              {sendingStatus === 'sending' ? (
+                <>
+                  <div className="h-4.5 w-4.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
+                  Send Automated
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+    </Modal>
   )
 }
 

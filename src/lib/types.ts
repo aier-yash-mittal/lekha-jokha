@@ -4,6 +4,7 @@ export interface Profile {
   full_name: string | null
   avatar_url: string | null
   upi_id?: string | null
+  dob?: string | null
   created_at: string
 }
 
@@ -43,6 +44,7 @@ export interface Expense {
   paid_by: string
   split_type: SplitType
   expense_date: string
+  bill_url?: string | null
   created_by: string
   created_at: string
   splits?: ExpenseSplit[]

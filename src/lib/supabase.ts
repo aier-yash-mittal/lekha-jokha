@@ -19,3 +19,35 @@ export const supabase = createClient(url ?? '', anonKey ?? '', {
 })
 
 export const isSupabaseConfigured = Boolean(url && anonKey)
+
+export async function uploadFile(
+  bucket: string,
+  filePath: string,
+  file: File
+): Promise<string> {
+  try {
+    // Attempt to upload to Supabase Storage bucket
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(filePath, file, {
+        upsert: true
+      })
+    if (error) throw error
+    const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(data.path)
+    return urlData.publicUrl
+  } catch (err) {
+    console.warn(`Storage upload to bucket "${bucket}" failed, falling back to base64 encoding:`, err)
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        if (typeof reader.result === 'string') {
+          resolve(reader.result)
+        } else {
+          reject(new Error('Failed to read file as base64 Data URL'))
+        }
+      }
+      reader.onerror = () => reject(reader.error)
+      reader.readAsDataURL(file)
+    })
+  }
+}

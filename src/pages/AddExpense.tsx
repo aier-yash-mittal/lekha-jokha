@@ -7,6 +7,7 @@ import { CURRENCIES, formatMoney } from '../lib/format'
 import type { Group, GroupMember, SplitType } from '../lib/types'
 import { Avatar, Spinner, Modal } from '../components/ui'
 import { CheckIcon, ChevronLeft, ReceiptIcon } from '../components/icons'
+import { uploadFile } from '../lib/supabase'
 
 const CATEGORIES = ['general', 'food', 'travel', 'home', 'shopping', 'utilities', 'entertainment']
 
@@ -34,6 +35,23 @@ export default function AddExpense() {
 
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const [billFile, setBillFile] = useState<File | null>(null)
+  const [billPreview, setBillPreview] = useState<string | null>(null)
+  const [uploadingBill, setUploadingBill] = useState(false)
+
+  function handleBillChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setBillFile(file)
+    setBillPreview(URL.createObjectURL(file))
+  }
+
+  function handleRemoveBill() {
+    setBillFile(null)
+    if (billPreview) URL.revokeObjectURL(billPreview)
+    setBillPreview(null)
+  }
 
   // Receipt Scanner Simulator state
   const [scanning, setScanning] = useState(false)
@@ -153,7 +171,14 @@ export default function AddExpense() {
     }
 
     setSaving(true)
+    setUploadingBill(true)
     try {
+      let billUrl: string | null = null
+      if (billFile) {
+        const path = `${user!.id}/${Date.now()}-${billFile.name}`
+        billUrl = await uploadFile('bills', path, billFile)
+      }
+
       await createExpense({
         groupId,
         description: description.trim(),
@@ -163,13 +188,16 @@ export default function AddExpense() {
         paidBy,
         splitType,
         expenseDate,
+        billUrl,
         createdBy: user!.id,
         splits: participantIds.map((id) => ({ userId: id, amount: computedSplits[id] ?? 0 }))
       })
       navigate(`/groups/${groupId}`, { replace: true })
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Could not save expense.')
+    } finally {
       setSaving(false)
+      setUploadingBill(false)
     }
   }
 
@@ -295,6 +323,32 @@ export default function AddExpense() {
           </div>
         </div>
 
+        <div>
+          <label className="label">Bill Photo (Optional)</label>
+          {billPreview ? (
+            <div className="relative mt-2 w-full max-w-[200px] rounded-xl overflow-hidden border border-gray-200 bg-white">
+              <img src={billPreview} alt="Bill preview" className="h-32 w-full object-cover" />
+              <button
+                type="button"
+                onClick={handleRemoveBill}
+                className="absolute top-1.5 right-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 transition"
+              >
+                ×
+              </button>
+            </div>
+          ) : (
+            <label className="mt-2 flex h-24 w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-white hover:bg-gray-50/50 transition">
+              <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                <svg className="w-8 h-8 text-gray-400 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <p className="text-xs text-muted">Click to upload bill photo</p>
+              </div>
+              <input type="file" accept="image/*" className="hidden" onChange={handleBillChange} />
+            </label>
+          )}
+        </div>
+
         {/* Split type */}
         <div>
           <label className="label">Split</label>
@@ -400,8 +454,8 @@ export default function AddExpense() {
 
         {error && <p className="text-sm font-medium text-owe">{error}</p>}
 
-        <button className="btn-primary w-full py-3.5 text-base shadow-sm" disabled={saving}>
-          {saving ? 'Saving…' : 'Save expense'}
+        <button className="btn-primary w-full py-3.5 text-base shadow-sm" disabled={saving || uploadingBill}>
+          {saving || uploadingBill ? 'Saving…' : 'Save expense'}
         </button>
       </form>
 

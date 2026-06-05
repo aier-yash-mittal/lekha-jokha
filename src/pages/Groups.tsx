@@ -57,8 +57,8 @@ export default function Groups() {
 
   return (
     <div>
-      <header className="safe-top flex items-center justify-between bg-white px-5 pb-4 pt-6 shadow-card">
-        <h1 className="text-2xl font-extrabold text-ink">Groups</h1>
+      <header className="safe-top flex items-center justify-between bg-white dark:bg-zinc-900 border-b border-transparent dark:border-zinc-800/60 px-5 pb-4 pt-6 shadow-card dark:shadow-none transition-colors duration-300">
+        <h1 className="text-2xl font-extrabold text-ink dark:text-zinc-100">Groups</h1>
         <button onClick={() => setOpen(true)} className="btn-primary px-3 py-2">
           <PlusIcon width={18} height={18} /> New
         </button>
@@ -83,14 +83,14 @@ export default function Groups() {
             {groups.map((g) => (
               <li key={g.id}>
                 <Link to={`/groups/${g.id}`} className="card flex items-center gap-3 p-4 active:scale-[0.99]">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-50 text-2xl">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-50 dark:bg-zinc-800/80 text-2xl">
                     {g.emoji ?? '🧾'}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-bold text-ink">{g.name}</p>
-                    {g.description && <p className="truncate text-xs text-muted">{g.description}</p>}
+                    <p className="truncate font-bold text-ink dark:text-zinc-100">{g.name}</p>
+                    {g.description && <p className="truncate text-xs text-muted dark:text-zinc-400">{g.description}</p>}
                   </div>
-                  <ChevronRight width={18} height={18} className="text-gray-300" />
+                  <ChevronRight width={18} height={18} className="text-gray-300 dark:text-zinc-600" />
                 </Link>
               </li>
             ))}
@@ -120,7 +120,7 @@ export default function Groups() {
                   key={em}
                   onClick={() => setEmoji(em)}
                   className={`flex h-11 w-11 items-center justify-center rounded-xl text-2xl transition ${
-                    emoji === em ? 'bg-brand-100 ring-2 ring-brand-500' : 'bg-gray-100'
+                    emoji === em ? 'bg-brand-100 dark:bg-brand-950/20 ring-2 ring-brand-500' : 'bg-gray-100 dark:bg-zinc-800'
                   }`}
                 >
                   {em}

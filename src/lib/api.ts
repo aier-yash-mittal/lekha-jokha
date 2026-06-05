@@ -111,6 +111,7 @@ export async function createExpense(input: {
   splitType: SplitType
   expenseDate: string
   createdBy: string
+  billUrl?: string | null
   splits: { userId: string; amount: number }[]
 }): Promise<void> {
   const { data, error } = await supabase
@@ -124,6 +125,7 @@ export async function createExpense(input: {
       paid_by: input.paidBy,
       split_type: input.splitType,
       expense_date: input.expenseDate,
+      bill_url: input.billUrl ?? null,
       created_by: input.createdBy
     })
     .select('id')
@@ -166,7 +168,10 @@ export async function deleteGroup(groupId: string): Promise<void> {
   if (error) throw error
 }
 
-export async function updateProfile(userId: string, fields: { full_name?: string; upi_id?: string }): Promise<void> {
+export async function updateProfile(
+  userId: string,
+  fields: { full_name?: string; upi_id?: string; dob?: string | null; avatar_url?: string | null }
+): Promise<void> {
   const { error } = await supabase.from('profiles').update(fields).eq('id', userId)
   if (error) throw error
 }
